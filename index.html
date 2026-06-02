@@ -3,312 +3,356 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PLUS BINGO - Ultra Pro</title>
+    <title>PLUS BINGO</title>
     <style>
         :root {
-            --primary: #ff4757;
-            --primary-hover: #ff6b81;
+            --primary-color: #ffcc00;
             --bg-dark: #0f172a;
             --card-bg: #1e293b;
-            --text-light: #f8fafc;
-            --accent: #2ed573;
-            --gold: #ffa500;
+            --text-main: #ffffff;
+            --accent-red: #ef4444;
         }
 
         * {
+            box-sizing: border-box;
             margin: 0;
             padding: 0;
-            box-sizing: border-box;
             font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
         }
 
         body {
             background-color: var(--bg-dark);
-            color: var(--text-light);
+            color: var(--text-main);
             min-height: 100vh;
             display: flex;
             flex-direction: column;
         }
 
-        header {
-            background: linear-gradient(135deg, #1e1b4b 0%, #311042 100%);
-            padding: 20px;
-            text-align: center;
-            border-bottom: 3px solid var(--primary);
-            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
-        }
-
-        header h1 {
-            font-size: 2.5rem;
-            color: var(--text-light);
-            text-shadow: 0 0 10px var(--primary);
-            letter-spacing: 2px;
-        }
-
-        /* Main Game Layout */
-        .game-container {
+        /* ሎቢ / መግቢያ ገፅ */
+        #lobby-screen {
             display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
             flex: 1;
             padding: 20px;
-            gap: 20px;
-            max-width: 1600px;
-            margin: 0 auto;
+            background: radial-gradient(circle, #1e293b 0%, #0f172a 100%);
+        }
+
+        .lobby-title {
+            font-size: 3.5rem;
+            color: var(--primary-color);
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            text-shadow: 0 0 25px rgba(255, 204, 0, 0.5);
+            font-weight: 900;
+        }
+
+        .lobby-subtitle {
+            font-size: 1.2rem;
+            color: #94a3b8;
+            margin-bottom: 40px;
+        }
+
+        .rooms-container {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 25px;
+            max-width: 600px;
             width: 100%;
         }
 
-        /* Left Side: History & Analytics */
-        .left-panel {
-            flex: 1;
-            background-color: var(--card-bg);
-            border-radius: 15px;
-            padding: 20px;
-            border: 1px solid #334155;
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-            max-height: 75vh;
-        }
-
-        /* Right Side: Interactive Board */
-        .right-panel {
-            flex: 2.5;
-            background-color: var(--card-bg);
-            border-radius: 15px;
-            padding: 20px;
-            border: 1px solid #334155;
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-        }
-
-        /* Screens */
-        .screen { display: none; }
-        .screen.active { display: flex; flex-direction: column; gap: 20px; width: 100%; }
-
-        /* Lobby Style */
-        .lobby-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-            gap: 20px;
-            margin-top: 20px;
-        }
-
         .room-card {
-            background: linear-gradient(145deg, #1e293b, #0f172a);
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
             border: 2px solid #334155;
-            border-radius: 12px;
-            padding: 30px 20px;
+            border-radius: 16px;
+            padding: 30px;
             text-align: center;
             cursor: pointer;
             transition: all 0.3s ease;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.3);
         }
 
         .room-card:hover {
             transform: translateY(-5px);
-            border-color: var(--primary);
-            box-shadow: 0 10px 20px rgba(255, 71, 87, 0.2);
+            border-color: var(--primary-color);
+            box-shadow: 0 15px 30px rgba(255, 204, 0, 0.2);
         }
 
-        .room-card h3 { font-size: 1.8rem; color: var(--gold); margin-bottom: 10px; }
-        .room-card p { color: #94a3b8; font-size: 0.9rem; }
+        .room-amount {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: var(--primary-color);
+            margin-bottom: 5px;
+        }
 
-        /* Numbers Grid (1-400) */
-        .numbers-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(55px, 1fr));
-            gap: 8px;
+        .room-label {
+            color: #94a3b8;
+            font-size: 1rem;
+            text-transform: uppercase;
+        }
+
+        /* ዋናው የጨዋታ ገፅታ (በግራና ቀኝ የተከፈለ Flex አቀማመጥ) */
+        #game-screen {
+            display: none;
+            flex-direction: row;
+            flex: 1;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* የግራ ክፍል - ታሪክ ማሳያ (History Log) */
+        .left-panel {
+            width: 320px;
+            background-color: #111827;
+            border-right: 2px solid #1f2937;
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+        }
+
+        .panel-title {
+            font-size: 1.3rem;
+            color: var(--primary-color);
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #374151;
+            text-transform: uppercase;
+        }
+
+        .history-list {
+            flex: 1;
             overflow-y: auto;
-            max-height: 50vh;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
             padding-right: 5px;
         }
 
-        .num-cell {
+        .history-item {
+            background-color: #1f2937;
+            border-left: 4px solid var(--primary-color);
+            padding: 12px;
+            border-radius: 6px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(-10px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        /* የቀኝ ክፍል - የቁጥር ሰሌዳ (Interactive Cards) */
+        .main-panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background-color: var(--bg-dark);
+            padding: 25px;
+            overflow-y: auto;
+        }
+
+        .game-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            background-color: var(--card-bg);
+            padding: 15px 25px;
+            border-radius: 12px;
+            border: 1px solid #334155;
+        }
+
+        .game-info-title {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+
+        .drawn-display {
+            font-size: 3.5rem;
+            font-weight: bold;
+            color: #00ff66;
+            background-color: #0f172a;
+            padding: 10px 30px;
+            border-radius: 10px;
+            border: 2px solid #00ff66;
+            min-width: 120px;
+            text-align: center;
+            text-shadow: 0 0 15px rgba(0, 255, 102, 0.3);
+        }
+
+        /* ከ1 እስከ 400 የቁጥር ካርዶች ማትሪክስ */
+        .matrix-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(65px, 1fr));
+            gap: 10px;
+            background-color: var(--card-bg);
+            padding: 20px;
+            border-radius: 16px;
+            border: 1px solid #334155;
+            flex: 1;
+        }
+
+        .number-card {
             background-color: #0f172a;
             border: 1px solid #334155;
-            border-radius: 6px;
-            aspect-ratio: 1;
+            border-radius: 8px;
+            height: 55px;
             display: flex;
             align-items: center;
             justify-content: center;
             font-weight: bold;
             font-size: 1.1rem;
-            transition: all 0.2s;
+            color: #64748b;
+            transition: all 0.2s ease;
         }
 
-        .num-cell.drawn {
-            background-color: var(--primary);
-            color: white;
-            border-color: var(--primary);
-            box-shadow: 0 0 8px var(--primary);
-            animation: pop 0.3s ease-out;
+        .number-card.active {
+            background: linear-gradient(135deg, #ffcc00 0%, #ff9900 100%);
+            color: #0f172a;
+            border-color: #fff;
+            transform: scale(1.05);
+            box-shadow: 0 0 12px rgba(255, 204, 0, 0.4);
         }
 
-        /* History Log */
-        .history-list {
-            list-style: none;
-            overflow-y: auto;
-            flex: 1;
+        .controls-bar {
+            margin-top: 20px;
             display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
-
-        .history-item {
-            background-color: #0f172a;
-            padding: 10px;
-            border-left: 4px solid var(--accent);
-            border-radius: 4px;
-            font-weight: 500;
-        }
-
-        /* Control Panel */
-        .controls {
-            display: flex;
-            gap: 15px;
             justify-content: center;
-            margin-top: auto;
+            gap: 15px;
         }
 
-        button {
-            background-color: var(--primary);
+        .btn-action {
+            background: linear-gradient(135deg, #2ed573 0%, #26af5f 100%);
             color: white;
             border: none;
-            padding: 12px 25px;
-            border-radius: 8px;
-            font-size: 1rem;
+            padding: 15px 40px;
+            font-size: 1.2rem;
             font-weight: bold;
+            border-radius: 30px;
             cursor: pointer;
-            transition: background 0.2s;
+            box-shadow: 0 5px 15px rgba(46, 213, 115, 0.4);
+            transition: all 0.2s ease;
         }
 
-        button:hover { background-color: var(--primary-hover); }
-        button:disabled { background-color: #475569; cursor: not-allowed; }
-
-        .current-display {
-            font-size: 5rem;
-            font-weight: 900;
-            color: var(--accent);
-            text-align: center;
-            text-shadow: 0 0 20px rgba(46, 213, 115, 0.4);
-            margin: 20px 0;
-            height: 100px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+        .btn-action:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(46, 213, 115, 0.6);
         }
 
-        @keyframes pop {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.2); }
-            100% { transform: scale(1); }
+        .btn-leave {
+            background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            border-radius: 30px;
+            cursor: pointer;
+            box-shadow: 0 5px 15px rgba(239, 68, 68, 0.4);
+            transition: all 0.2s ease;
         }
     </style>
 </head>
 <body>
 
-    <header>
-        <h1>PLUS BINGO</h1>
-    </header>
+    <!-- ሎቢ / መግቢያ ገፅ -->
+    <div id="lobby-screen">
+        <h1 class="lobby-title">PLUS BINGO</h1>
+        <p class="lobby-subtitle">ክፍል ይምረጡና ጨዋታውን ይቀላቀሉ</p>
+        <div class="rooms-container">
+            <div class="room-card" onclick="enterRoom(5)">
+                <div class="room-amount">5 Birr</div>
+                <div class="room-label">መደበኛ ክፍል</div>
+            </div>
+            <div class="room-card" onclick="enterRoom(10)">
+                <div class="room-amount">10 Birr</div>
+                <div class="room-label">ታዋቂ ክፍል</div>
+            </div>
+            <div class="room-card" onclick="enterRoom(50)">
+                <div class="room-amount">50 Birr</div>
+                <div class="room-label">ከፍተኛ ክፍል</div>
+            </div>
+            <div class="room-card" onclick="enterRoom(100)">
+                <div class="room-amount">100 Birr</div>
+                <div class="room-label">ቪአይፒ ክፍል</div>
+            </div>
+        </div>
+    </div>
 
-    <div class="game-container">
-        <!-- LEFT PANEL: History Logs -->
+    <!-- ዋናው የጨዋታ ገፅታ -->
+    <div id="game-screen">
+        <!-- የግራ ታሪክ ሰሌዳ -->
         <div class="left-panel">
-            <h2>የወጡ ቁጥሮች ታሪክ</h2>
-            <hr style="border-color: #334155;">
-            <ul id="historyList" class="history-list">
-                <li style="color: #64748b; text-align: center; margin-top: 20px;">እስካሁን የወጣ ቁጥር የለም</li>
-            </ul>
+            <h2 class="panel-title">የወጡ ቁጥሮች ታሪክ</h2>
+            <div class="history-list" id="historyList"></div>
         </div>
 
-        <!-- RIGHT PANEL: Main Interactive View -->
-        <div class="right-panel">
-            
-            <!-- 1. Lobby Screen -->
-            <div id="lobbyScreen" class="screen active">
-                <h2>የመጫወቻ ክፍል ይምረጡ</h2>
-                <div class="lobby-grid">
-                    <div class="room-card" onclick="joinRoom(5)">
-                        <h3>5 Birr</h3>
-                        <p>የመግቢያ ክፍያ</p>
-                    </div>
-                    <div class="room-card" onclick="joinRoom(10)">
-                        <h3>10 Birr</h3>
-                        <p>የመግቢያ ክፍያ</p>
-                    </div>
-                    <div class="room-card" onclick="joinRoom(50)">
-                        <h3>50 Birr</h3>
-                        <p>የመግቢያ ክፍያ</p>
-                    </div>
-                    <div class="room-card" onclick="joinRoom(100)">
-                        <h3>100 Birr</h3>
-                        <p>የመግቢያ ክፍያ</p>
-                    </div>
+        <!-- የቀኝ ዋና ሰሌዳ -->
+        <div class="main-panel">
+            <div class="game-header">
+                <div>
+                    <div class="game-info-title" id="roomTitle">ክፍል: 5 Birr</div>
+                    <div style="color: #94a3b8; margin-top: 5px;">የቀጥታ ጨዋታ (Synced)</div>
                 </div>
+                <div class="drawn-display" id="currentDrawn">--</div>
             </div>
 
-            <!-- 2. Game Board Screen -->
-            <div id="gameScreen" class="screen">
-                <div style="display: flex; justify-content: space-between; align-items: center;">
-                    <h2 id="roomTitle">ክፍል: -</h2>
-                    <span id="syncedBadge" style="background-color: var(--accent); color: #0f172a; padding: 5px 10px; border-radius: 20px; font-weight: bold; font-size: 0.8rem;">የቀን የተመሳሰለ (Synced)</span>
-                </div>
+            <!-- ከ1 እስከ 400 ቁጥሮች ማውጫ ማትሪክስ -->
+            <div class="matrix-container" id="matrixContainer"></div>
 
-                <div class="current-display" id="currentNumber">-</div>
-
-                <!-- 1 to 400 Number Matrix -->
-                <div class="numbers-grid" id="numbersGrid"></div>
-
-                <div class="controls">
-                    <button id="drawBtn" onclick="requestDraw()">ቁጥር አውጣ</button>
-                    <button style="background-color: #475569;" onclick="leaveRoom()">ከክፍል ውጣ</button>
-                </div>
+            <div class="controls-bar">
+                <button class="btn-action" onclick="requestDraw()">ቁጥር አውጣ</button>
+                <button class="btn-leave" onclick="exitToLobby()">ከክፍል ውጣ</button>
             </div>
-
         </div>
     </div>
 
     <script>
-        // Production Server URL directly pointing to your Render app
-        const SERVER_URL = "https://plus-bingo.onrender.com";
-        
-        let currentRoom = null;
+        const SERVER_URL = "https://plus-bingo.onrender.com"; 
+        let currentRoom = 5;
         let drawnNumbers = new Set();
 
-        // Initialize 1-400 Grid
-        const grid = document.getElementById('numbersGrid');
+        // ከ1 እስከ 400 ካርዶችን መፍጠሪያ
+        const matrixContainer = document.getElementById('matrixContainer');
         for (let i = 1; i <= 400; i++) {
-            const cell = document.createElement('div');
-            cell.className = 'num-cell';
-            cell.id = `cell-${i}`;
-            cell.innerText = i;
-            grid.appendChild(cell);
+            const card = document.createElement('div');
+            card.className = 'number-card';
+            card.id = `num-${i}`;
+            card.innerText = i;
+            matrixContainer.appendChild(card);
         }
 
-        function joinRoom(amount) {
+        function enterRoom(amount) {
             currentRoom = amount;
-            document.getElementById('roomTitle').innerText = `ክፍል: ${amount} Birr`;
-            document.getElementById('lobbyScreen').classList.remove('active');
-            document.getElementById('gameScreen').classList.add('active');
+            document.getElementById('roomTitle').innerText = `PLUS BINGO - ክፍል: ${amount} Birr`;
+            document.getElementById('lobby-screen').style.display = 'none';
+            document.getElementById('game-screen').style.display = 'flex';
             resetBoard();
         }
 
-        function leaveRoom() {
-            currentRoom = null;
-            document.getElementById('gameScreen').classList.remove('active');
-            document.getElementById('lobbyScreen').classList.add('active');
+        function exitToLobby() {
+            document.getElementById('game-screen').style.display = 'none';
+            document.getElementById('lobby-screen').style.display = 'flex';
+            resetBoard();
         }
 
-        function resetBoard() {
-            drawnNumbers.clear();
-            document.getElementById('currentNumber').innerText = "-";
-            document.getElementById('historyList').innerHTML = "";
-            document.querySelectorAll('.num-cell').forEach(cell => {
-                cell.className = 'num-cell';
-            });
+        // Voice component - ቁጥር ሲወጣ በድምፅ ማስታወቂያ ማድረጊያ
+        function speakNumber(num) {
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
+                const msg = new SpeechSynthesisUtterance(`Number ${num}`);
+                msg.rate = 1.0;
+                window.speechSynthesis.speak(msg);
+            }
         }
 
         function requestDraw() {
-            // Simulated local action / Hooked up to server broadcast for synced game
             if(drawnNumbers.size >= 400) {
                 alert("ሁሉም ቁጥሮች ወጥተዋል!");
                 return;
@@ -324,33 +368,28 @@
 
         function handleNewNumber(num) {
             drawnNumbers.add(num);
-            
-            // UI Updates
-            document.getElementById('currentNumber').innerText = num;
-            
-            const cell = document.getElementById(`cell-${num}`);
-            if(cell) cell.classList.add('drawn');
-
-            // Update History List
-            const historyList = document.getElementById('historyList');
-            if(drawnNumbers.size === 1) historyList.innerHTML = "";
-            
-            const li = document.createElement('li');
-            li.className = 'history-item';
-            li.innerText = `ቁጥር ${num} ወጥቷል`;
-            historyList.insertBefore(li, historyList.firstChild);
-
-            // High-End Voice Calling Synthesis
+            document.getElementById('currentDrawn').innerText = num;
             speakNumber(num);
+
+            const card = document.getElementById(`num-${num}`);
+            if (card) {
+                card.classList.add('active');
+                
+                const historyList = document.getElementById('historyList');
+                const item = document.createElement('div');
+                item.className = 'history-item';
+                item.innerHTML = `<span>ቁጥር እጣ</span> <strong style="color:#ffcc00; font-size:1.2rem;">${num}</strong>`;
+                historyList.insertBefore(item, historyList.firstChild);
+            }
         }
 
-        function speakNumber(num) {
-            if ('speechSynthesis' in window) {
-                window.speechSynthesis.cancel(); // Stop current speech
-                const utterance = new SpeechSynthesisUtterance(`Number ${num}`);
-                utterance.rate = 1.0;
-                window.speechSynthesis.speak(utterance);
-            }
+        function resetBoard() {
+            drawnNumbers.clear();
+            document.getElementById('currentDrawn').innerText = '--';
+            document.getElementById('historyList').innerHTML = '';
+            document.querySelectorAll('.number-card').forEach(card => {
+                card.classList.remove('active');
+            });
         }
     </script>
 </body>
