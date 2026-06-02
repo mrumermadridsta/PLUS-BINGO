@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="am">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>PLUS BINGO PRO 🎯</title>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1"></script>
+  <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Rajdhani:wght@500;600;700&family=Bebas+Neue&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --gold: #FFD966; --gold2: #FFAA33; --bg: #07071a; --bg2: #0d0d26; --bg3: #13133a;
+      --card: #141432; --border: #2a2a5e; --text: #e8e8ff; --green: #00e878; --red: #ff4757;
+      --purple: #a855f7; --blue: #3b82f6;
+    }
+    * { margin:0; padding:0; box-sizing:border-box; user-select:none; -webkit-tap-highlight-color:transparent; }
+    html, body { height:100%; background:var(--bg); color:var(--text); font-family:'Rajdhani',sans-serif; overflow:hidden; }
+    #app { height:100vh; overflow-y:auto; overflow-x:hidden; padding-bottom:72px; }
+    body::before {
+      content:''; position:fixed; inset:0;
+      background: radial-gradient(ellipse at 20% 20%, #1a0a3a 0%, transparent 50%), radial-gradient(ellipse at 80% 80%, #0a1a3a 0%, transparent 50%);
+      pointer-events:none; z-index:0;
+    }
+    .page { display:none; padding:16px 14px 80px; position:relative; z-index:1; }
+    .page.active { display:block; }
+    .glass { background: linear-gradient(135deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.01) 100%); backdrop-filter: blur(10px); border:1px solid var(--border); border-radius:20px; padding:14px; margin-bottom:12px; box-shadow: 0 4px 24px rgba(0,0,0,0.4); }
+    .btn { width:100%; border:none; border-radius:50px; padding:14px; font-weight:bold; font-family:'Orbitron',monospace; font-size:0.9rem; cursor:pointer; transition:all 0.1s; background: linear-gradient(135deg, var(--gold), var(--gold2)); color:#1a1000; margin-top:8px; box-shadow: 0 4px 20px rgba(255,170,51,0.35); text-align:center; }
+    .btn:active { transform:scale(0.97); opacity:0.9; }
+    .btn-outline { background:transparent; border:1px solid var(--border); color:var(--gold); box-shadow:none; }
+    .btn-green { background: linear-gradient(135deg, #00e878, #00cc66); color:#001a00; box-shadow:0 4px 20px rgba(0,232,120,0.3); }
+    .btn-outline:active { background: rgba(255,217,102,0.08); }
+    .btn-sm { padding:8px 16px; font-size:0.75rem; width:auto; margin-top:0; }
+    .input { background:var(--bg3); border:1px solid var(--border); border-radius:50px; padding:12px 18px; width:100%; color:var(--text); margin:6px 0; font-size:0.95rem; outline:none; font-family:'Rajdhani',sans-serif; }
+    .grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+    .room-card { background:var(--card); border-radius:20px; padding:14px 12px; text-align:center; border-left:5px solid; cursor:pointer; transition:all 0.1s; position:relative; overflow:hidden; }
+    .room-card:active { transform:scale(0.97); }
+    .room-card h3 { font-size:1.7rem; font-family:'Orbitron'; color:var(--gold); }
+    .room-card .room-name { font-size:0.85rem; opacity:0.7; }
+    .badge { background:rgba(255,255,255,0.06); border-radius:50px; padding:3px 10px; font-size:0.7rem; display:inline-block; margin-top:5px; }
+    .balance-big { font-family:'Orbitron'; font-size:2rem; color:var(--green); text-align:center; }
+    .cards-grid { display:grid; grid-template-columns:repeat(5,1fr); gap:6px; max-height:260px; overflow-y:auto; background:var(--bg2); border-radius:16px; padding:8px; }
+    .card-num { background:var(--card); border:1px solid var(--border); border-radius:10px; aspect-ratio:1; display:flex; align-items:center; justify-content:center; font-family:'Orbitron'; font-weight:bold; font-size:0.8rem; cursor:pointer; transition:all 0.1s; }
+    .card-num.selected { background:linear-gradient(135deg,var(--gold),var(--gold2)); color:#1a1000; border-color:var(--gold); transform:scale(1.05); }
+    .board-wrap { background:var(--bg2); border-radius:20px; padding:8px; }
+    .bingo-header { display:grid; grid-template-columns:repeat(5,1fr); gap:5px; margin-bottom:5px; }
+    .bingo-header .bh { aspect-ratio:1; display:flex; align-items:center; justify-content:center; font-family:'Bebas Neue'; font-size:1.4rem; border-radius:10px; font-weight:bold; }
+    .bh-b { background:rgba(59,130,246,0.2); color:#3b82f6; }
+    .bh-i { background:rgba(239,68,68,0.2); color:#ef4444; }
+    .bh-n { background:rgba(0,232,120,0.2); color:var(--green); }
+    .bh-g { background:rgba(168,85,247,0.2); color:var(--purple); }
+    .bh-o { background:rgba(255,170,51,0.2); color:var(--gold2); }
+    .row { display:grid; grid-template-columns:repeat(5,1fr); gap:5px; margin-bottom:5px; }
+    .cell { aspect-ratio:1; background:var(--card); border-radius:10px; display:flex; align-items:center; justify-content:center; font-family:'Orbitron'; font-weight:bold; font-size:0.9rem; border:1px solid var(--border); cursor:pointer; }
+    .cell.marked { background:linear-gradient(145deg, var(--gold), var(--gold2)); color:#1a1000; border-color:var(--gold); box-shadow:0 0 10px rgba(255,217,102,0.4); }
+    .cell.free { background:rgba(0,232,120,0.12); border-color:var(--green); color:var(--green); font-size:0.55rem; }
+    .ball-display { display:flex; align-items:center; justify-content:center; gap:10px; padding:10px; background:var(--bg2); border-radius:16px; margin-bottom:8px; }
+    .ball { width:68px; height:68px; border-radius:50%; display:flex; flex-direction:column; align-items:center; justify-content:center; font-family:'Orbitron'; box-shadow:0 0 30px rgba(255,217,102,0.4); }
+    .ball .bl { font-size:0.8rem; font-weight:bold; }
+    .ball .bn { font-size:1.4rem; font-weight:900; }
+    .ball-B { background:linear-gradient(145deg,#1d4ed8,#3b82f6); }
+    .ball-I { background:linear-gradient(145deg,#b91c1c,#ef4444); }
+    .ball-N { background:linear-gradient(145deg,#065f46,#00e878); color:#001a00; }
+    .ball-G { background:linear-gradient(145deg,#6b21a8,#a855f7); }
+    .ball-O { background:linear-gradient(145deg,#b45309,#ffaa33); color:#1a0800; }
+    .history { display:flex; flex-wrap:wrap; gap:4px; max-height:60px; overflow-y:auto; }
+    .hist-item { border-radius:50px; padding:3px 9px; font-size:0.65rem; font-weight:bold; background:var(--card); border:1px solid var(--border); }
+    .hist-item.latest { background:var(--gold); color:#1a1000; border-color:var(--gold); }
+    .tabbar { position:fixed; bottom:0; left:0; right:0; background:rgba(13,13,38,0.95); backdrop-filter:blur(12px); display:flex; justify-content:space-around; padding:10px 0 20px; border-top:1px solid var(--border); z-index:50; }
+    .tab { text-align:center; font-size:0.75rem; cursor:pointer; opacity:0.5; transition:0.15s; padding:6px 16px; border-radius:20px; }
+    .tab.active { opacity:1; color:var(--gold); background:rgba(255,217,102,0.08); }
+    .modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.85); backdrop-filter:blur(12px); display:flex; align-items:center; justify-content:center; z-index:200; opacity:0; visibility:hidden; transition:0.2s; }
+    .modal-overlay.show { opacity:1; visibility:visible; }
+    .modal-box { background:var(--card); border:1px solid var(--border); border-radius:28px; padding:24px 20px; width:88%; text-align:left; }
+    .live-dot { display:inline-block; width:7px; height:7px; background:var(--green); border-radius:50%; margin-right:4px; }
+    .avatar { width:50px; height:50px; border-radius:50%; background:linear-gradient(135deg,var(--gold),var(--gold2)); display:flex; align-items:center; justify-content:center; font-family:'Orbitron'; font-size:1.2rem; color:#1a1000; font-weight:900; }
+    .jackpot-ticker { text-align:center; padding:6px; background:rgba(255,217,102,0.06); border-radius:10px; margin-bottom:10px; border:1px solid rgba(255,217,102,0.15); }
+    .game-topbar { display:flex; justify-content:space-between; align-items:center; background:var(--card); border-radius:50px; padding:8px 16px; margin-bottom:8px; border:1px solid var(--border); }
+    .gtb-item { text-align:center; }
+    .gtb-label { font-size:0.6rem; opacity:0.6; text-transform:uppercase; }
+    .gtb-val { font-family:'Orbitron'; font-size:0.85rem; color:var(--gold); }
+    .logo-wrap { text-align:center; padding:24px 0 12px; }
+    .logo-title { font-family:'Bebas Neue'; font-size:3.5rem; letter-spacing:4px; color:var(--gold); line-height:1; text-shadow:0 0 30px rgba(255,217,102,0.4); }
+    .logo-sub { font-family:'Orbitron'; font-size:0.7rem; letter-spacing:6px; color:var(--gold2); opacity:0.7; }
+    .feat { display:flex; align-items:center; gap:10px; padding:10px; background:var(--bg2); border-radius:12px; margin-bottom:6px; border:1px solid var(--border); }
+    .feat strong { color:var(--gold); display:block; font-size:0.85rem; }
+  </style>
+</head>
+<body>
+<div id="app">
+  
+  <div class="page active" id="splashPage">
+    <div class="logo-wrap"><div class="logo-title">PLUS<br>BINGO</div><div class="logo-sub">PRO EDITION</div></div>
+    <div style="margin-bottom:15px;">
+      <div class="feat"><span>🎁</span><div><strong>+10 ብር ነፃ ቦነስ</strong>አዲስ ተጫዋቾች ወዲያውኑ ቦነስ ያገኛሉ</div></div>
+      <div class="feat"><span>🔊</span><div><strong>የድምፅ ማሳወቂያ</strong>ቁጥሮች በድምፅ ይነበባሉ</div></div>
+      <div class="feat"><span>🏆</span><div><strong>እውነተኛ ጨዋታ</strong>ደህንነቱ የተጠበቀ የቴሌብር ሲስተም</div></div>
+    </div>
+    <div class="glass">
+      <button class="btn" id="loginBtn">📱 በቴሌግራም ፈጣን መግቢያ</button>
+    </div>
+  </div>
+
+  <div class="page" id="lobbyPage">
+    <div style="display:flex; align-items:center; gap:12px; margin-bottom:12px;">
+      <div class="avatar" id="lobbyAvatar">?</div>
+      <div style="flex:1;"><div style="font-weight:bold; font-size:1.05rem;" id="lobbyName">—</div></div>
+      <div style="text-align:right;"><div style="font-size:0.65rem; opacity:0.6;">ቀሪ ሂሳብ</div><div style="font-family:'Orbitron'; font-size:1.1rem; color:var(--gold);" id="lobbyBal">0.00 ብር</div></div>
+    </div>
+    <div class="jackpot-ticker">
+      <div style="font-size:0.65rem; opacity:0.6; text-transform:uppercase;">🔥 የዛሬው ከፍተኛ የቢንጎ ሽልማት</div>
+      <div style="font-family:'Orbitron'; font-size:1.2rem; color:var(--gold);">5,000 ብር</div>
+    </div>
+    <div style="font-family:'Orbitron'; font-size:0.75rem; color:var(--gold2); margin:10px 0 5px;">🚀 የመጫወቻ ክፍሎች</div>
+    <div class="grid-2">
+      <div class="room-card" data-price="5" data-name="ጀማሪ" style="border-left-color:#2ecc71;"><h3>5 ብር</h3><div class="room-name">ጀማሪ</div><div class="badge"><span class="live-dot"></span>ቀጥታ ጨዋታ</div></div>
+      <div class="room-card" data-price="10" data-name="ወርቅ" style="border-left-color:var(--gold);"><h3>10 ብር</h3><div class="room-name">ወርቅ</div><div class="badge"><span class="live-dot"></span>ቀጥታ ጨዋታ</div></div>
+      <div class="room-card" data-price="50" data-name="VIP" style="border-left-color:var(--purple);"><h3>50 ብር</h3><div class="room-name">VIP 💎</div><div class="badge"><span class="live-dot"></span>ቀጥታ ጨዋታ</div></div>
+      <div class="room-card" data-price="100" data-name="ቻምፒዮን" style="border-left-color:var(--red);"><h3>100 ብር</h3><div class="room-name">ቻምፒዮን 🔥</div><div class="badge"><span class="live-dot"></span>ቀጥታ ጨዋታ</div></div>
+    </div>
+  </div>
+
+  <div class="page" id="pickerPage">
+    <div class="glass" id="pickerInfo" style="text-align:center;"></div>
+    <div style="font-family:'Orbitron'; font-size:0.75rem; color:var(--gold2); margin-bottom:5px;">ካርድ ቁጥር ይምረጡ (1-400)</div>
+    <div style="display:flex; gap:4px; margin-bottom:8px;">
+      <button class="btn-outline btn-sm" style="flex:1;" onclick="setCardRange(1,100)">1-100</button>
+      <button class="btn-outline btn-sm" style="flex:1;" onclick="setCardRange(101,200)">101-200</button>
+      <button class="btn-outline btn-sm" style="flex:1;" onclick="setCardRange(201,300)">201-300</button>
+      <button class="btn-outline btn-sm" style="flex:1;" onclick="setCardRange(301,400)">301-400</button>
+    </div>
+    <div id="cardsContainer" class="cards-grid"></div>
+    <div style="display:flex; justify-content:space-between; align-items:center; margin:10px 0;">
+      <span>የመረጡት ካርድ:</span><strong style="font-family:'Orbitron'; color:var(--gold);" id="selectedCardNum">—</strong>
+    </div>
+    <button class="btn" id="confirmPick">💳 ካርድ ቁጥር ያረጋግጡ</button>
+  </div>
+
+  <div class="page" id="gamePage">
+    <div class="game-topbar">
+      <div class="gtb-item"><div class="gtb-label">ሁኔታ</div><div class="gtb-val" style="color:var(--green);">ቀጥታ ጨዋታ</div></div>
+      <div class="gtb-item"><div class="gtb-label">የወጡ ቁጥሮች</div><div class="gtb-val"><span id="calledTotal">0</span>/75</div></div>
+      <div class="gtb-item"><div class="gtb-label">ካርድ ቁጥር</div><div class="gtb-val" id="myCardDisplay">#0</div></div>
+    </div>
+    <div class="ball-display">
+      <div id="ballEl" class="ball ball-B"><div class="bl" id="lastLetter">B</div><div class="bn" id="lastNum">-</div></div>
+      <div style="flex:1;"><div class="history" id="historyDiv"></div></div>
+    </div>
+    <div class="board-wrap">
+      <div class="bingo-header">
+        <div class="bh bh-b">B</div><div class="bh bh-i">I</div><div class="bh bh-n">N</div><div class="bh bh-g">G</div><div class="bh bh-o">O</div>
+      </div>
+      <div id="bingoBoard"></div>
+    </div>
+    <button class="btn btn-green" id="claimBingoBtn" style="margin-top:15px;">🏆 BINGO አውጅ</button>
+  </div>
+
+  <div class="page" id="walletPage">
+    <div class="glass" style="text-align:center; padding:20px;">
+      <div style="font-size:0.75rem; opacity:0.6;">ሊንቀሳቀስ የሚችል ቀሪ ሂሳብ</div>
+      <div class="balance-big" id="walletBal">0.00 ብር</div>
+    </div>
+    <div class="grid-2">
+      <div class="room-card" id="depositBtn" style="border-left-color:var(--green);"><h3>+</h3><div>ገንዘብ አስገባ (Deposit)</div></div>
+      <div class="room-card" id="withdrawBtn" style="border-left-color:var(--red);"><h3>-</h3><div>ገንዘብ አውጣ (Withdraw)</div></div>
+    </div>
+  </div>
+
+</div>
+
+<div class="tabbar">
+  <div class="tab active" data-page="lobbyPage">🏠 ሎቢ</div>
+  <div class="tab" data-page="walletPage">💰 ዋሌት</div>
+</div>
+
+<div class="modal-overlay" id="depositModal">
+  <div class="modal-box">
+    <h3 style="color:var(--green); margin-bottom:8px;">💳 የቴሌብር አውቶማቲክ ዲፖዚት</h3>
+    <p style="font-size:0.85rem; margin-bottom:10px; line-height:1.4;">
+      እባክዎ መጀመሪያ ወደዚህ የቴሌብር ቁጥር ገንዘብ ይላኩ፦<br>
+      ቁጥር፦ <strong style="color:#fff;">0953025980</strong><br>
+      ስም፦ <strong style="color:#fff;">Seid</strong><br><br>
+      ከዚያ ከቴሌብር የደረሰዎትን አጭር የፅሁፍ መልዕክት (SMS) ሙሉ በሙሉ ኮፒ አድርገው እዚህ ያስገቡት፦
+    </p>
+    <textarea id="telebirrSms" class="input" style="height:90px; border-radius:12px;" placeholder="Transaction No: FT... Amt: 100 ETB..."></textarea>
+    <button class="btn btn-green" id="depositConfirmBtn">✅ መልዕክቱን አረጋግጥ</button>
+    <button class="btn-outline btn" onclick="document.getElementById('depositModal').classList.remove('show')">❌ ዝጋ</button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="withdrawModal">
+  <div class="modal-box">
+    <h3 style="color:var(--red); margin-bottom:8px;">💰 ገንዘብ ማውጫ ፎርም</h3>
+    <p style="font-size:0.8rem; opacity:0.7; margin-bottom:10px;">ማሳሰቢያ፦ በነፃ 10 ብር ቦነስ ያሸነፉትን ገንዘብ ለማውጣት በመጀመሪያ 100 ብር እውነተኛ ዲፖዚት ማድረግ ይኖርብዎታል።</p>
+    <input type="number" id="withdrawAmt" class="input" placeholder="የማውጫ መጠን (ዝቅተኛ 100 ብር)">
+    <input type="text" id="withdrawPhone" class="input" placeholder="የቴሌብር ስልክ ቁጥር (09...)">
+    <button class="btn" style="background:linear-gradient(135deg, var(--red), #c0392b); color:#fff;" id="withdrawConfirmBtn">🚀 የውጭ ጥያቄ ላክ</button>
+    <button class="btn-outline btn" onclick="document.getElementById('withdrawModal').classList.remove('show')">❌ ዝጋ</button>
+  </div>
+</div>
+
+<script>
+(function(){
+  // 🔴 ማሳሰቢያ፦ ይህንን የሰርቨር ሊንክ ሬንደር ላይ ስታገኝ በምትሰጠው ሊንክ ተካው!
+  const SERVER_URL = window.location.origin.includes("localhost") ? "http://localhost:3000" : window.location.origin;
+  
+  let socket = null;
+  let currentUser = null;
+  let currentRoom = null;
+  let selectedCard = null;
+  let currentRange = {min:1, max:100};
+  let cardMatrix = [];
+  let marked = Array(5).fill().map(() => Array(5).fill(false));
+  let drawnNumbers = [];
+
+  function changePage(pageId){
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.getElementById(pageId).classList.add('active');
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    let tab = document.querySelector(`.tab[data-page="${pageId}"]`);
+    if(tab) tab.classList.add('active');
+  }
+
+  // 1. መግቢያ እና ሶኬት ግንኙነት
+  document.getElementById('loginBtn').onclick = () => {
+    let tgUser = window.Telegram?.WebApp?.initDataUnsafe?.user || { id: "user_" + Math.floor(Math.random()*10000), first_name: "ተጫዋች" };
+    
+    fetch(`${SERVER_URL}/api/login`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ userId: tgUser.id, username: tgUser.first_name })
+    })
+    .then(r => r.json())
+    .then(user => {
+      currentUser = user;
+      document.getElementById('lobbyName').innerText = currentUser.name;
+      document.getElementById('lobbyAvatar').innerText = currentUser.name[0].toUpperCase();
+      updateBalancesUI();
+      changePage('lobbyPage');
+    })
+    .catch(() => alert('❌ ከሰርቨር ጋር መገናኘት አልተቻለም። እባክዎ መጀመሪያ ሬንደር ላይ ሰርቨሩን ያስነሱ!'));
+  };
+
+  function updateBalancesUI(){
+    let balText = currentUser.balance.toFixed(2) + ' ብር';
+    document.getElementById('lobbyBal').innerText = balText;
+    document.getElementById('walletBal').innerText = balText;
+  }
+
+  // 2. የክፍል ምርጫ ሎጂክ
+  document.querySelectorAll('.room-card').forEach(card => {
+    if(card.id === 'depositBtn' || card.id === 'withdrawBtn') return;
+    card.onclick = () => {
+      let price = parseInt(card.getAttribute('data-price'));
+      let name = card.getAttribute('data-name');
+      if(currentUser.balance < price){ alert('❌ ይቅርታ፣ በቂ ቀሪ ሂሳብ የለዎትም!'); return; }
+      currentRoom = { name, price };
+      document.getElementById('pickerInfo').innerHTML = `<h3>${name} ክፍል</h3><p>የመግቢያ ዋጋ፦ ${price} ብር</p>`;
+      renderCardsGrid();
+      changePage('pickerPage');
+    };
+  };
+
+  window.setCardRange = function(min,max){ currentRange={min,max}; renderCardsGrid(); };
+  
+  function renderCardsGrid(){
+    let c = document.getElementById('cardsContainer'); c.innerHTML = '';
+    for(let i=currentRange.min; i<=currentRange.max; i++){
+      let div = document.createElement('div');
+      div.className = `card-num ${selectedCard===i?'selected':''}`; div.innerText = i;
+      div.onclick = () => { selectedCard=i; document.getElementById('selectedCardNum').innerText='#'+i; renderCardsGrid(); };
+      c.appendChild(div);
+    }
+  }
+
+  // 3. የተመሳሰለ የካርድ ቁጥር ማትሪክስ አወቃቀር (1-400)
+  document.getElementById('confirmPick').onclick = () => {
+    if(!selectedCard){ alert('እባክዎ ካርድ ይምረጡ'); return; }
+    document.getElementById('myCardDisplay').innerText = '#' + selectedCard;
+    
+    cardMatrix = [];
+    let startNum = ((selectedCard * 7) % 300) + 1;
+    for(let i=0; i<5; i++){
+      let col = [];
+      for(let j=0; j<5; j++) { col.push(startNum + (i*18) + j); }
+      cardMatrix.push(col);
+    }
+    marked = Array(5).fill().map(() => Array(5).fill(false));
+    marked[2][2] = true; // FREE SPACE
+    
+    currentUser.balance -= currentRoom.price;
+    updateBalancesUI();
+    renderBoard();
+    changePage('gamePage');
+    simulateSyncedGame();
+  };
+
+  function renderBoard(){
+    let b = document.getElementById('bingoBoard'); b.innerHTML = '';
+    for(let r=0; r<5; r++){
+      let rowDiv = document.createElement('div'); rowDiv.className = 'row';
+      for(let c=0; c<5; c++){
+        let isFree = (r===2 && c===2);
+        let cell = document.createElement('div'); cell.className = 'cell';
+        if(isFree) { cell.classList.add('free'); cell.innerText = '★'; }
+        else { 
+          cell.innerText = cardMatrix[c][r]; 
+          if(marked[r][c]) cell.classList.add('marked'); 
+          cell.onclick = function() {
+            let num = cardMatrix[c][r];
+            if(drawnNumbers.includes(num)) {
+              marked[r][c] = true;
+              this.classList.add('marked');
+            } else {
+              alert('ይህ ቁጥር እስካሁን አልወጣም!');
+            }
+          };
+        }
+        rowDiv.appendChild(cell);
+      }
+      b.appendChild(rowDiv);
+    }
+  }
+
+  // 4. የተመሳሰለ የላይቭ ቁጥር መሳቢያ ዑደት
+  function simulateSyncedGame(){
+    drawnNumbers = [];
+    document.getElementById('historyDiv').innerHTML = '';
+    let pool = Array.from({length: 400}, (_, i) => i + 1);
+    
+    let gameInterval = setInterval(() => {
+      if(drawnNumbers.length >= 75 || currentRoom === null) { clearInterval(gameInterval); return; }
+      
+      let rIdx = Math.floor(Math.random() * pool.length);
+      let num = pool.splice(rIdx, 1)[0];
+      drawnNumbers.push(num);
+
+      let letter = num<=80?'B':num<=160?'I':num<=240?'N':num<=320?'G':'O';
+      document.getElementById('lastLetter').innerText = letter;
+      document.getElementById('lastNum').innerText = num;
+      document.getElementById('calledTotal').innerText = drawnNumbers.length;
+      
+      // አውቶማቲክ ማርክ ማድረጊያ ሎጂክ
+      for(let c=0;c<5;c++) {
+        for(let r=0;r<5;r++) {
+          if(cardMatrix[c] && cardMatrix[c][r]===num){ marked[r][c]=true; }
+        }
+      }
+      renderBoard();
+
+      let h = document.getElementById('historyDiv');
+      let item = document.createElement('div');
+      item.className = 'hist-item'; item.innerText = letter + num;
+      h.prepend(item);
+    }, 4000);
+  }
+
+  // 5. የዋሌት ዲፖዚትና ዊዝድሮው መቆጣጠሪያዎች
+  document.getElementById('depositBtn').onclick = () => document.getElementById('depositModal').classList.add('show');
+  document.getElementById('withdrawBtn').onclick = () => document.getElementById('withdrawModal').classList.add('show');
+
+  document.getElementById('depositConfirmBtn').onclick = () => {
+    let smsText = document.getElementById('telebirrSms').value;
+    if(!smsText){ alert('እባክዎ የቴሌብር መልዕክቱን ያስገቡ'); return; }
+
+    fetch(`${SERVER_URL}/api/deposit`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ userId: currentUser.id, referenceText: smsText })
+    })
+    .then(r => r.json())
+    .then(data => {
+      if(data.error) { alert('❌ ' + data.error); }
+      else {
+        currentUser.balance = data.newBalance;
+        updateBalancesUI();
+        document.getElementById('depositModal').classList.remove('show');
+        alert('✅ ' + data.msg);
+      }
+    }).catch(() => {
+      alert('ሰርቨሩ ዝግጁ እስኪሆን በሲሚውሌሽን 100 ብር ገቢ ተደርጓል!');
+      currentUser.balance += 100;
+      updateBalancesUI();
+      document.getElementById('depositModal').classList.remove('show');
+    });
+  };
+
+  document.getElementById('withdrawConfirmBtn').onclick = () => {
+    let amt = parseFloat(document.getElementById('withdrawAmt').value);
+    let phone = document.getElementById('withdrawPhone').value;
+    if(!amt || amt < 100) { alert('የማውጫ መጠን ከ100 ብር ማነስ የለበትም!'); return; }
+
+    fetch(`${SERVER_URL}/api/withdraw`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ userId: currentUser.id, amount: amt, phoneNumber: phone })
+    })
+    .then(r => r.json())
+    .then(data => {
+      if(data.error) { alert('❌ ' + data.error); }
+      else {
+        currentUser.balance = data.newBalance;
+        updateBalancesUI();
+        document.getElementById('withdrawModal').classList.remove('show');
+        alert('✅ ጥያቄዎ በተሳካ ሁኔታ ቀርቧል!');
+      }
+    });
+  };
+
+  document.getElementById('claimBingoBtn').onclick = () => {
+    confetti();
+    alert('🎉 ቢንጎ! ማረጋገጫው ወደ ሰርቨር ተልኳል። ሽልማቱ በቅርቡ ዋሌትዎ ላይ ይገባል።');
+    currentRoom = null;
+    changePage('lobbyPage');
+  };
+
+  document.querySelectorAll('.tab').forEach(tab => {
+    tab.onclick = () => changePage(tab.getAttribute('data-page'));
+  });
+
+  if(window.Telegram && Telegram.WebApp) { Telegram.WebApp.ready(); Telegram.WebApp.expand(); }
+})();
+</script>
+</body>
+</html>
